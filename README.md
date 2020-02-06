@@ -5,11 +5,11 @@ This repository provides a simple logistic regression classification baseline fo
 
 Through simple commands, one can:
 
-    * Run random search trials over a variety of LR hyperparameters, including those involving the input representation.
-    * Run cross-validation/jackknifing if dev set is not available
-    * Run experiments with (possibly stratified) subsamples of the training data
-    * Parallelize experiments using `gnu parallel`
-    * Visualize the effect of individual hyperparameters on classification performance
+* Run random search trials over a variety of LR hyperparameters, including those involving the input representation.
+* Run cross-validation/jackknifing if dev set is not available
+* Run experiments with (possibly stratified) subsamples of the training data
+* Parallelize experiments using `gnu parallel`
+* Visualize the effect of individual hyperparameters on classification performance
 
 This repository just expects a `train.jsonl` file, in JSON lines format, each line corresponding to the format `{"text":..., "label":...}`. You can also supply a `dev.jsonl` file. If you don't, we will jackknife the training data and report performance metrics over all splits. 
 
