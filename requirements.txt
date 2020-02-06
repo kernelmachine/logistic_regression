@@ -1,0 +1,5 @@
+numpy
+tokenizers
+pandas
+scikit-learn
+seaborn
