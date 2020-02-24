@@ -57,11 +57,11 @@ def train_lr(train,
                                lowercase=True,
                                ngram_range=ngram_range)
     start = time.time()
-    vect.fit(tqdm(master.text, desc="fitting data"))
-    X_train = vect.transform(tqdm(train.text, desc="transforming training data"))
-    X_dev = vect.transform(tqdm(dev.text, desc="transforming dev data"))
+    vect.fit(tqdm(master.text, desc="fitting data", leave=False))
+    X_train = vect.transform(tqdm(train.text, desc="transforming training data",  leave=False))
+    X_dev = vect.transform(tqdm(dev.text, desc="transforming dev data",  leave=False))
     if test is not None:
-        X_test = vect.transform(tqdm(test.text, desc="transforming test data"))
+        X_test = vect.transform(tqdm(test.text, desc="transforming test data",  leave=False))
 
     sample['C'] = float(sample['C'])
     sample['tol'] = float(sample['tol'])
@@ -141,12 +141,11 @@ if __name__ == '__main__':
     num_assignments = args.search_trials
     num_partitions = args.jackknife_partitions
     df = pd.DataFrame()
-
+    current_f1 = 0.0
+    best_classifier = None
+    best_vect = None
     if args.dev_file:
-        pbar = tqdm(range(num_assignments), desc="search trials")
-        current_f1 = 0.0
-        best_classifier = None
-        best_vect = None
+        pbar = tqdm(range(num_assignments), desc="search trials", leave=False)
         for i in pbar:
             try:
                 classifier, vect, res = train_lr(train, dev, test, SEARCH_SPACE)
@@ -165,10 +164,16 @@ if __name__ == '__main__':
                 os.mkdir(os.path.join(args.serialization_dir, "jackknife"))
         for ix, (train, dev) in tqdm(enumerate(jackknife(train, num_partitions=num_partitions)),
                                      total=num_partitions,
+                                     leave=False,
                                      desc="jackknife partitions"):
-            for i in tqdm(range(num_assignments), desc="search trials"):
+            for i in tqdm(range(num_assignments), desc="search trials",  leave=False):
                 classifier, vect, res = train_lr(train, dev, test, SEARCH_SPACE)
                 df = pd.concat([df, res], 0, sort=True)
+                best_f1 = df.dev_f1.max()
+                if res.dev_f1[0] > current_f1:
+                    current_f1 = res.dev_f1[0]
+                    best_classifier = classifier
+                    best_vect = vect
             df['dataset_reader.sample'] = train.shape[0]
             df['model.encoder.architecture.type'] = 'logistic regression'
             if args.save_jackknife_partitions:

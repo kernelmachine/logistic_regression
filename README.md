@@ -31,12 +31,12 @@ python -m lr.train --train_file data/train.jsonl --dev_file data/dev.jsonl --sea
 python -m lr.train --train_file data/train.jsonl --search_trials 10 --jackknife_partitions 3 --save_jackknife_partitions --serialization_dir model_logs/jackknife_lr  --stratified --train_subsample 1000 -o
 ```
 
+
 ### Evaluate on test data
 
 ```
-parallel --ungroup python -m lr.train --train_file data/train.jsonl --dev_file data/dev.jsonl --test-fiele data/test.jsonl --search_trials 1  --serialization_dir model_logs/ag_lr/exp_{#} --evaluate-on-test -o ::: {1..6}
+parallel --ungroup python -m lr.train --train_file data/train.jsonl --dev_file data/dev.jsonl --test_file data/test.jsonl --search_trials 1  --serialization_dir model_logs/ag_lr/exp_{#} --evaluate_on_test -o ::: {1..6}
 ```
-
 
 ### Run many experiments in parallel
 
