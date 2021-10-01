@@ -118,7 +118,18 @@ SEARCH_SPACE = {
         "multi_class": "auto",
         "tol": RandomSearch.random_loguniform(10e-5, 10e-3),
         "stopwords": RandomSearch.random_choice([0, 1]),
-        "weight": RandomSearch.random_choice(["tf", "tf-idf", "binary"]),
+        "weight": RandomSearch.random_choice(["hash"]),
         "ngram_range": RandomSearch.random_choice(["1 2", "2 3", "1 3"]),
         "random_state": RandomSearch.random_integer(0, 100000)
+}
+BEST_HPS = {
+        "penalty": "l1",
+        "C": 0.977778,
+        "multi_class": "auto",
+        "solver": "liblinear",
+        "tol": 0.000816,
+        "ngram_range": "1 2",
+        "random_state": 44555,
+        "weight": "hash",
+        "stopwords": None
 }

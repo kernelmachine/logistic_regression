@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Union
 import numpy as np
 import pandas as pd
 import ray
-from sklearn.feature_extraction.text import (CountVectorizer, TfidfTransformer,
+from sklearn.feature_extraction.text import (CountVectorizer, TfidfTransformer, HashingVectorizer,
                                              TfidfVectorizer)
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score
@@ -44,14 +44,17 @@ def load_model(serialization_dir):
         vect = TfidfVectorizer(stop_words=stop_words,
                                lowercase=True,
                                ngram_range=ngram_range)
+    elif weight == 'hash':
+        vect = HashingVectorizer(stop_words=stop_words,lowercase=True,ngram_range=ngram_range)
     else:
         vect = CountVectorizer(binary=binary,
                                stop_words=stop_words,
                                lowercase=True,
                                ngram_range=ngram_range)
-    with open(os.path.join(args.model, "vocab.json"), 'r') as f:
-        vocab = json.load(f)
-    vect.vocabulary_ = vocab
+    if weight != "hash":
+        with open(os.path.join(args.model, "vocab.json"), 'r') as f:
+            vocab = json.load(f)
+        vect.vocabulary_ = vocab
     hyperparameters['C'] = float(hyperparameters['C'])
     hyperparameters['tol'] = float(hyperparameters['tol'])
     classifier = LogisticRegression(**hyperparameters)
@@ -70,13 +73,16 @@ def eval_lr(test,
     X_test = vect.transform(tqdm(test.text, desc="fitting and transforming data"))
     end = time.time()
     preds = classifier.predict(X_test)
-    return f1_score(test.label, preds, average='macro'), classifier.score(X_test, test.label)
+    scores = classifier.predict_proba(X_test)
+    return f1_score(test.label, preds, average='macro'), classifier.score(X_test, test.label), scores
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--eval_file', type=str)
     parser.add_argument('--model', '-m', type=str)
+    parser.add_argument('--output', '-o', type=str)
+    
     
     
     args = parser.parse_args()
@@ -89,7 +95,10 @@ if __name__ == '__main__':
     print(f"reading evaluation data at {args.eval_file}...")
     test = pd.read_json(args.eval_file, lines=True)
     
-    f1, acc = eval_lr(test, clf, vect)
+    f1, acc, scores = eval_lr(test, clf, vect)
+    if args.output:
+        out = pd.DataFrame({'id': test['id'], 'score': scores.tolist()})
+        out.to_json(args.output, lines=True, orient='records')
 
     print("================")
     print(f"F1: {f1}")

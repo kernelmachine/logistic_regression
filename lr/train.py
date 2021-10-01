@@ -14,13 +14,13 @@ from typing import Any, Dict, List, Union
 import numpy as np
 import pandas as pd
 import ray
-from sklearn.feature_extraction.text import (CountVectorizer, TfidfVectorizer)
+from sklearn.feature_extraction.text import (CountVectorizer, TfidfVectorizer, HashingVectorizer)
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from lr.hyperparameters import (SEARCH_SPACE, HyperparameterSearch,
+from lr.hyperparameters import (SEARCH_SPACE,BEST_HPS, HyperparameterSearch,
                              RandomSearch)
 from lr.util import jackknife, replace_bool, stratified_sample
 
@@ -51,6 +51,8 @@ def train_lr(train,
         vect = TfidfVectorizer(stop_words=stop_words,
                                lowercase=True,
                                ngram_range=ngram_range)
+    elif weight == 'hash':
+        vect = HashingVectorizer(stop_words=stop_words, lowercase=True, ngram_range=ngram_range)
     else:
         vect = CountVectorizer(binary=binary,
                                stop_words=stop_words,
@@ -148,7 +150,7 @@ if __name__ == '__main__':
         pbar = tqdm(range(num_assignments), desc="search trials", leave=False)
         for i in pbar:
             try:
-                classifier, vect, res = train_lr(train, dev, test, SEARCH_SPACE)
+                classifier, vect, res = train_lr(train, dev, test, BEST_HPS)
                 df = pd.concat([df, res], 0, sort=True)
                 best_f1 = df.dev_f1.max()
                 if res.dev_f1[0] > current_f1:
@@ -167,7 +169,7 @@ if __name__ == '__main__':
                                      leave=False,
                                      desc="jackknife partitions"):
             for i in tqdm(range(num_assignments), desc="search trials",  leave=False):
-                classifier, vect, res = train_lr(train, dev, test, SEARCH_SPACE)
+                classifier, vect, res = train_lr(train, dev, test, BEST_HPS)
                 df = pd.concat([df, res], 0, sort=True)
                 best_f1 = df.dev_f1.max()
                 if res.dev_f1[0] > current_f1:
@@ -230,10 +232,11 @@ if __name__ == '__main__':
             best_hp.pop("test_f1")
         best_hp.pop("training_duration")
         json.dump(best_hp, f)
-    with open(os.path.join(args.serialization_dir, "vocab.json"), 'w+') as f:
-        for k,v in best_vect.__dict__['vocabulary_'].items():
-            best_vect.__dict__['vocabulary_'][k] = int(v)
-        json.dump(best_vect.__dict__['vocabulary_'], f)
+    if best_hp['weight'] != "hash":
+        with open(os.path.join(args.serialization_dir, "vocab.json"), 'w+') as f:
+            for k,v in best_vect.__dict__['vocabulary_'].items():
+                best_vect.__dict__['vocabulary_'][k] = int(v)
+            json.dump(best_vect.__dict__['vocabulary_'], f)
 
     os.mkdir(os.path.join(args.serialization_dir, "archive"))
     try:
