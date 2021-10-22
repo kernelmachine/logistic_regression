@@ -27,7 +27,7 @@ logger.setLevel(logging.DEBUG)
 
 
 def load_model(serialization_dir):
-    with open(os.path.join(args.model, "best_hyperparameters.json"), 'r') as f:
+    with open(os.path.join(serialization_dir, "best_hyperparameters.json"), 'r') as f:
         hyperparameters = json.load(f)
     if hyperparameters.pop('stopwords') == 1:
         stop_words = 'english'
@@ -52,7 +52,7 @@ def load_model(serialization_dir):
                                lowercase=True,
                                ngram_range=ngram_range)
     if weight != "hash":
-        with open(os.path.join(args.model, "vocab.json"), 'r') as f:
+        with open(os.path.join(serialization_dir, "vocab.json"), 'r') as f:
             vocab = json.load(f)
         vect.vocabulary_ = vocab
     hyperparameters['C'] = float(hyperparameters['C'])
