@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import sys
 import pathlib
 import random
 import shutil
@@ -93,13 +94,20 @@ if __name__ == '__main__':
         clf, vect = load_model(args.model)
 
     print(f"reading evaluation data at {args.eval_file}...")
-    test = pd.read_json(args.eval_file, lines=True)
-    
-    f1, acc, scores = eval_lr(test, clf, vect)
-    if args.output:
-        out = pd.DataFrame({'id': test['id'], 'score': scores.tolist()})
-        out.to_json(args.output, lines=True, orient='records')
+    if args.eval_file == "-":
+		for line in sys.stdin:
+			line = json.loads(line)
+			X_test = vect.transform(line['text'])
+			scores = classifier.predict_proba(X_test)
+			print(scores)
+	else:
+		test = pd.read_json(args.eval_file, lines=True)
 
-    print("================")
-    print(f"F1: {f1}")
-    print(f"accuracy: {acc}")
+		f1, acc, scores = eval_lr(test, clf, vect)
+		if args.output:
+			out = pd.DataFrame({'id': test['id'], 'score': scores.tolist()})
+			out.to_json(args.output, lines=True, orient='records')
+
+		print("================")
+		print(f"F1: {f1}")
+		print(f"accuracy: {acc}")
